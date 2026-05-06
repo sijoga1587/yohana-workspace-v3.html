@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Yohana · Workspace</title>
+<!-- Supabase CDN — debe cargarse primero -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1494,19 +1496,22 @@ function renderAll() {
 }
 
 /* ─── ARRANQUE ───────────────────────────────────────────── */
-// Esperar a que Supabase CDN esté disponible
-window.addEventListener('load', () => {
-  if (window.supabase) {
+function initApp() {
+  if (typeof window.supabase !== 'undefined') {
+    _supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
     loadAll();
   } else {
-    // Si el CDN falla, renderizar con estado vacío
-    console.warn('Supabase CDN no disponible');
-    renderAll();
+    // Reintentar hasta que el CDN esté listo
+    setTimeout(initApp, 100);
   }
-});
-</script>
+}
 
-<!-- Supabase JS CDN — debe ir antes del cierre del body -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+// Arrancar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+</script>
 </body>
 </html>
