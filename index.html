@@ -1484,6 +1484,323 @@ el('btn-new-note').addEventListener('click', () => {
   openModal('modal-note');
 });
 
+/* ─── NAVEGACIÓN ─────────────────────────────────────────── */
+document.querySelectorAll('[data-nav]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    el('screen-' + btn.dataset.nav).classList.add('active');
+    renderAll();
+  });
+});
+
+/* ─── TEMA ───────────────────────────────────────────────── */
+const html = document.documentElement;
+function applyTheme(t) {
+  html.dataset.theme = t;
+  document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === t));
+  localStorage.setItem('yw_theme', t);
+}
+document.querySelectorAll('.theme-dot').forEach(d => d.addEventListener('click', () => applyTheme(d.dataset.theme)));
+applyTheme(localStorage.getItem('yw_theme') || 'default');
+
+/* ─── MODO OSCURO ────────────────────────────────────────── */
+function applyMode(m) {
+  html.dataset.mode = m;
+  el('mode-label').textContent = m === 'dark' ? 'Modo claro' : 'Modo oscuro';
+  const icon = el('mode-icon');
+  icon.innerHTML = m === 'dark'
+    ? '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>'
+    : '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+  localStorage.setItem('yw_mode', m);
+}
+el('mode-toggle').addEventListener('click', () => applyMode(html.dataset.mode === 'dark' ? 'light' : 'dark'));
+applyMode(localStorage.getItem('yw_mode') || 'light');
+
+/* ─── AVATAR ─────────────────────────────────────────────── */
+const avatarEl = el('avatar-el');
+avatarEl.addEventListener('click', () => el('avatar-file').click());
+el('avatar-file').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => { avatarEl.style.backgroundImage = `url(${ev.target.result})`; avatarEl.textContent = ''; localStorage.setItem('yw_avatar', ev.target.result); };
+  r.readAsDataURL(file);
+});
+const savedAvatar = localStorage.getItem('yw_avatar');
+if (savedAvatar) { avatarEl.style.backgroundImage = `url(${savedAvatar})`; avatarEl.textContent = ''; }
+
+/* ─── FECHA ──────────────────────────────────────────────── */
+el('dash-date').textContent = new Date().toLocaleDateString('es-CO', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+/* ─── MODALES ────────────────────────────────────────────── */
+function openModal(id)  { el(id).classList.add('open'); }
+function closeModal(id) { el(id).classList.remove('open'); }
+document.querySelectorAll('.modal-backdrop').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+
+/* ─── BÚSQUEDA ───────────────────────────────────────────── */
+const searchInput = el('search-input');
+const searchResults = el('search-results');
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.toLowerCase().trim();
+  if (q.length < 2) { searchResults.classList.remove('open'); return; }
+  const results = [];
+  state.tasks.forEach(t => { if ([t.description,t.client,t.obs].join(' ').toLowerCase().includes(q)) results.push({type:'Tarea',title:t.description,meta:`${t.client} · ${t.status}`,nav:'tasks'}); });
+  state.projects.forEach(p => { if ([p.name,p.client,p.description,p.obs].join(' ').toLowerCase().includes(q)) results.push({type:'Proyecto',title:p.name,meta:`${p.client} · ${p.status}`,nav:'projects'}); });
+  state.notes.forEach(n => { if ([n.project,n.body,n.client].join(' ').toLowerCase().includes(q)) results.push({type:'Nota',title:n.project,meta:n.client||'General',nav:'notebook'}); });
+  searchResults.innerHTML = results.length ? results.slice(0,8).map(r => `<div class="search-result-item" onclick="goTo('${r.nav}')"><div class="sri-type">${r.type}</div><div class="sri-title">${r.title}</div><div class="sri-meta">${r.meta}</div></div>`).join('') : '<div class="search-result-item"><div class="sri-meta">Sin resultados</div></div>';
+  searchResults.classList.add('open');
+});
+document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) searchResults.classList.remove('open'); });
+function goTo(nav) { searchResults.classList.remove('open'); searchInput.value = ''; document.querySelector(`[data-nav="${nav}"]`).click(); }
+
+/* ─── BADGE HELPERS ──────────────────────────────────────── */
+const STATUS_CLASS = { 'Pendiente':'badge-pending','En proceso':'badge-progress','En Progreso':'badge-progress','Completada':'badge-done','Finalizado':'badge-finish','Suspendido':'badge-suspend','Sin Iniciar':'badge-none' };
+const PRIO_CLASS   = { Alta:'badge-high', Media:'badge-medium', Baja:'badge-low' };
+function badge(txt, cls) { return `<span class="badge ${cls||''}">${txt}</span>`; }
+
+/* ─── CLIENT SELECTS ─────────────────────────────────────── */
+function getClientOptions(selectedVal) {
+  return `<option value="">— Selecciona —</option>` + state.clients.map(c => `<option value="${c.name}" ${c.name===selectedVal?'selected':''}>${c.name}</option>`).join('');
+}
+function refreshClientSelects(selectedVal) {
+  ['task-client','proj-client','drv-client','note-client'].forEach(id => { const s = el(id); if (s) s.innerHTML = getClientOptions(selectedVal||''); });
+}
+
+/* ─── PERIODICIDAD ───────────────────────────────────────── */
+function toggleRecurFields() {
+  const freq = el('task-recur').value;
+  el('recur-end-wrap').style.display    = freq !== 'none' ? '' : 'none';
+  el('recur-days-wrap').style.display   = freq === 'weekly' ? '' : 'none';
+  el('recur-custom-wrap').style.display = freq === 'custom' ? '' : 'none';
+}
+function getRecurData() {
+  const freq = el('task-recur').value;
+  if (freq === 'none') return null;
+  const days = ['rd1','rd2','rd3','rd4','rd5','rd6'].filter(id => el(id)?.checked).map(id => el(id).value);
+  return { freq, endDate: el('task-recur-end').value||null, days: freq==='weekly'?days:[], interval: freq==='custom'?parseInt(el('task-recur-interval').value)||7:null };
+}
+function setRecurFields(recur) {
+  if (!recur) { el('task-recur').value = 'none'; toggleRecurFields(); return; }
+  el('task-recur').value = recur.freq;
+  if (recur.endDate) el('task-recur-end').value = recur.endDate;
+  if (recur.interval) el('task-recur-interval').value = recur.interval;
+  if (recur.days) recur.days.forEach(d => { const cb = el('rd'+d); if(cb) cb.checked = true; });
+  toggleRecurFields();
+}
+function nextRecurDate(task) {
+  if (!task.recur) return null;
+  const base = new Date((task.date||today())+'T12:00:00');
+  const { freq, interval, days } = task.recur;
+  if (freq==='daily') base.setDate(base.getDate()+1);
+  else if (freq==='biweekly') base.setDate(base.getDate()+14);
+  else if (freq==='monthly') base.setMonth(base.getMonth()+1);
+  else if (freq==='custom') base.setDate(base.getDate()+(interval||7));
+  else if (freq==='weekly') {
+    if (!days||!days.length) { base.setDate(base.getDate()+7); }
+    else { const sd=days.map(Number).sort((a,b)=>a-b); let d=base.getDay()||7; let next=sd.find(x=>x>d); if(!next){next=sd[0];base.setDate(base.getDate()+7);} base.setDate(base.getDate()+(next-(base.getDay()||7))); }
+  }
+  const nextStr = base.toISOString().split('T')[0];
+  if (task.recur.endDate && nextStr > task.recur.endDate) return null;
+  return nextStr;
+}
+function recurLabel(recur) {
+  if (!recur) return '';
+  const MAP = { daily:'Diaria', weekly:'Semanal', biweekly:'Quincenal', monthly:'Mensual', custom:`Cada ${recur.interval}d` };
+  return `<span class="recur-pill">↻ ${MAP[recur.freq]||recur.freq}</span>`;
+}
+
+/* ─── RENDER DASHBOARD ───────────────────────────────────── */
+function renderDashboard() {
+  const tasks = state.tasks, projects = state.projects, drivers = state.drivers;
+  el('s-pending').textContent  = tasks.filter(t=>t.status==='Pendiente').length;
+  el('s-progress').textContent = tasks.filter(t=>t.status==='En proceso').length;
+  el('s-done').textContent     = tasks.filter(t=>t.status==='Completada').length;
+  el('s-projects').textContent = projects.filter(p=>p.status==='En proceso').length;
+  el('s-hours').textContent    = drivers.reduce((s,d)=>s+(d.s1+d.s2+d.s3+d.s4+d.s5),0);
+  el('badge-tasks').textContent = tasks.filter(t=>t.status!=='Completada').length;
+  const clients = [...new Set(tasks.map(t=>t.client))];
+  el('dash-clients').innerHTML = clients.length ? clients.map(c => {
+    const ct=tasks.filter(t=>t.client===c), done=ct.filter(t=>t.status==='Completada').length, pct=ct.length?Math.round(done/ct.length*100):0;
+    return `<div class="card"><div class="card-label">${c}</div><div class="card-title">${ct.length} tareas</div><div class="progress-wrap" style="margin:8px 0"><div class="progress-fill" style="width:${pct}%"></div></div><div class="card-meta">${pct}% completado</div></div>`;
+  }).join('') : '<div class="empty"><div class="empty-txt">Sin clientes con tareas</div></div>';
+  const todayTasks = tasks.filter(t=>t.date===today()&&t.status!=='Completada');
+  el('dash-today').innerHTML = todayTasks.length ? todayTasks.map(t=>`<div class="card"><div class="card-label">${t.client}</div><div class="card-title">${t.description}</div><div class="card-footer">${badge(t.priority,PRIO_CLASS[t.priority])}${badge(t.status,STATUS_CLASS[t.status]||'')}</div></div>`).join('') : '<div class="empty"><div class="empty-txt">Sin tareas para hoy</div></div>';
+}
+
+/* ─── RENDER TASKS ───────────────────────────────────────── */
+function renderTasks() {
+  const body = el('tasks-body');
+  body.innerHTML = state.tasks.length ? state.tasks.map(t => {
+    const isDone = t.status==='Completada';
+    return `<tr style="${isDone?'opacity:0.55;':''}">
+      <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${t.description}">${t.description} ${t.recur?recurLabel(t.recur):''}</td>
+      <td>${t.client||'—'}</td><td>${t.date||'—'}</td>
+      <td>${badge(t.priority,PRIO_CLASS[t.priority])}</td>
+      <td>${badge(t.type,t.type==='Administrativo'?'badge-admin':'badge-ops')}</td>
+      <td>${badge(t.status,STATUS_CLASS[t.status]||'')}</td>
+      <td style="white-space:nowrap;">
+        ${!isDone?`<button class="btn btn-ghost btn-sm" style="color:#16A34A;" onclick="doneTask('${t.id}')" title="Finalizar">✓</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="cycleTask('${t.id}')">↻</button>
+        <button class="btn btn-ghost btn-sm" onclick="editTask('${t.id}')">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">✕</button>
+      </td></tr>`;
+  }).join('') : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">✓</div><div class="empty-txt">Sin tareas.</div></div></td></tr>`;
+}
+function editTask(id) {
+  const t = state.tasks.find(t=>t.id===id); if (!t) return;
+  el('task-id').value = t.id;
+  el('task-modal-title').textContent = 'Editar tarea';
+  refreshClientSelects(t.client);
+  el('task-desc').value=t.description; el('task-date').value=t.date||'';
+  el('task-priority').value=t.priority; el('task-type').value=t.type; el('task-obs').value=t.obs||'';
+  setRecurFields(t.recur||null);
+  openModal('modal-task');
+}
+
+/* ─── RENDER PROJECTS ────────────────────────────────────── */
+let projectFilter = 'all';
+document.querySelectorAll('[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-filter]').forEach(b=>b.classList.remove('active-filter'));
+    btn.classList.add('active-filter'); projectFilter=btn.dataset.filter; renderProjects();
+  });
+});
+function renderProjects() {
+  const all = state.projects;
+  const filtered = projectFilter==='all' ? all : all.filter(p=>p.status===projectFilter);
+  const body = el('projects-body');
+  body.innerHTML = filtered.length ? filtered.map(p=>`<tr>
+    <td>${p.client}</td>
+    <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${p.name}">${p.name}</td>
+    <td style="max-width:160px;font-size:12px;color:var(--text2)">${p.impact||'—'}</td>
+    <td>${badge(p.priority,PRIO_CLASS[p.priority])}</td>
+    <td>${badge(p.status,STATUS_CLASS[p.status]||'')}</td>
+    <td style="font-size:12px">${p.date||'—'}</td>
+    <td><button class="btn btn-ghost btn-sm" onclick="editProject('${p.id}')">✎</button> <button class="btn btn-danger btn-sm" onclick="deleteProject('${p.id}')">✕</button></td>
+  </tr>`).join('') : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">📁</div><div class="empty-txt">Sin proyectos.</div></div></td></tr>`;
+}
+function editProject(id) {
+  const p = state.projects.find(p=>p.id===id); if (!p) return;
+  el('proj-id').value=p.id; el('proj-modal-title').textContent='Editar proyecto';
+  refreshClientSelects(p.client);
+  el('proj-name').value=p.name; el('proj-desc').value=p.description||'';
+  el('proj-impact').value=p.impact||''; el('proj-priority').value=p.priority;
+  el('proj-status').value=p.status; el('proj-date').value=p.date||''; el('proj-obs').value=p.obs||'';
+  openModal('modal-project');
+}
+
+/* ─── RENDER DRIVERS ─────────────────────────────────────── */
+function renderDrivers() {
+  const drivers = state.drivers;
+  const months = [...new Set(drivers.map(d=>d.month||'actual'))].sort().reverse();
+  let html = '';
+  months.forEach(m => {
+    const md = drivers.filter(d=>(d.month||'actual')===m);
+    const totalPct = md.reduce((s,d)=>s+(d.pct||0),0);
+    const totalHrs = md.reduce((s,d)=>s+(d.s1+d.s2+d.s3+d.s4+d.s5),0);
+    html += `<tr style="background:var(--bg2);"><td colspan="9" style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;padding:8px 14px;">${md[0]?.label||m} · ${totalPct?totalPct+'% total':totalHrs+' hrs'}</td></tr>`;
+    md.forEach(d => {
+      const t=d.s1+d.s2+d.s3+d.s4+d.s5;
+      const pct=d.pct?d.pct+'%':(totalHrs?(t/totalHrs*100).toFixed(1)+'%':'—');
+      html += `<tr><td>${d.client}</td><td>${d.s1||'—'}</td><td>${d.s2||'—'}</td><td>${d.s3||'—'}</td><td>${d.s4||'—'}</td><td>${d.s5||'—'}</td><td><strong>${t||'—'}</strong></td><td class="driver-pct">${pct}</td><td><button class="btn btn-danger btn-sm" onclick="deleteDriver('${d.id}')">✕</button></td></tr>`;
+    });
+  });
+  el('drivers-body').innerHTML = html || `<tr><td colspan="9"><div class="empty"><div class="empty-icon">📈</div><div class="empty-txt">Sin horas registradas.</div></div></td></tr>`;
+}
+
+/* ─── RENDER CLIENTS ─────────────────────────────────────── */
+let selectedClientColor = '#6366F1';
+document.querySelectorAll('[data-ccolor]').forEach(d => {
+  d.addEventListener('click', () => { selectedClientColor=d.dataset.ccolor; document.querySelectorAll('[data-ccolor]').forEach(b=>b.classList.remove('active')); d.classList.add('active'); });
+});
+function renderClients() {
+  const grid = el('clients-grid'); if (!grid) return;
+  grid.innerHTML = state.clients.length ? state.clients.map(c => {
+    const cTasks=state.tasks.filter(t=>t.client===c.name), pending=cTasks.filter(t=>t.status!=='Completada').length;
+    return `<div class="client-card" style="--client-color:${c.color}">
+      <div class="client-initial">${c.name.charAt(0).toUpperCase()}</div>
+      <div class="client-name">${c.name}</div>
+      <div class="client-sector">${c.sector||'Sin sector'}</div>
+      <div class="client-meta">${c.contact?'👤 '+c.contact:''}</div>
+      <div class="client-meta" style="margin-top:4px;">${cTasks.length} tarea${cTasks.length!==1?'s':''} · ${pending} pendiente${pending!==1?'s':''}</div>
+      <div class="client-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editClient('${c.id}')">✎ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">✕</button>
+      </div></div>`;
+  }).join('') : '<div class="empty"><div class="empty-icon">👥</div><div class="empty-txt">Sin clientes.</div></div>';
+}
+function editClient(id) {
+  const c = state.clients.find(c=>c.id===id); if (!c) return;
+  el('client-id').value=c.id; el('client-modal-title').textContent='Editar cliente';
+  el('client-name').value=c.name; el('client-sector').value=c.sector||''; el('client-contact').value=c.contact||'';
+  selectedClientColor=c.color||'#6366F1';
+  document.querySelectorAll('[data-ccolor]').forEach(d=>d.classList.toggle('active',d.dataset.ccolor===c.color));
+  openModal('modal-client');
+}
+
+/* ─── RENDER NOTES ───────────────────────────────────────── */
+let noteType='note', postitColor='postit-yellow', noteView=localStorage.getItem('yw_noteview')||'list';
+const POSTIT_ROTS=['-1.5deg','-0.8deg','1.2deg','0.5deg','-2deg','1.8deg','0deg','-0.4deg'];
+const STICKERS=[
+  {label:'⭐',svg:`<svg width="22" height="22" viewBox="0 0 22 22"><polygon points="11,2 13.8,8.4 21,9.3 16,14 17.6,21 11,17.5 4.4,21 6,14 1,9.3 8.2,8.4" fill="#FFD700" stroke="#FFA000" stroke-width="0.8"/></svg>`},
+  {label:'✅',svg:`<svg width="22" height="22" viewBox="0 0 22 22"><rect x="1" y="1" width="20" height="20" rx="4" fill="#ADFFD6" stroke="#00B96B" stroke-width="1"/><polyline points="5,11 9,15 17,7" stroke="#00B96B" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`},
+  {label:'🚀',svg:`<svg width="22" height="22" viewBox="0 0 22 22"><ellipse cx="11" cy="10" rx="5" ry="8" fill="#818CF8" stroke="#4F46E5" stroke-width="0.8"/><polygon points="6,14 2,20 8,18" fill="#FB923C"/><polygon points="16,14 20,20 14,18" fill="#FB923C"/><circle cx="11" cy="9" r="2.5" fill="white" opacity="0.7"/></svg>`},
+  {label:'💡',svg:`<svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="9" r="5.5" fill="#FFF9A3" stroke="#FFA000" stroke-width="0.8"/><rect x="8.5" y="14.5" width="5" height="2" rx="1" fill="#FFA000"/><rect x="9" y="16.5" width="4" height="1.5" rx="0.75" fill="#FFA000"/></svg>`},
+  {label:'⚠️',svg:`<svg width="22" height="22" viewBox="0 0 22 22"><polygon points="11,2 21,20 1,20" fill="#FFCDB3" stroke="#EA580C" stroke-width="1"/><line x1="11" y1="9" x2="11" y2="14" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="17" r="1.2" fill="#EA580C"/></svg>`},
+  {label:'📌',svg:`<svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="9" r="5.5" fill="#FB7185" stroke="#E11D48" stroke-width="0.8"/><circle cx="11" cy="9" r="2" fill="white" opacity="0.8"/><line x1="11" y1="14.5" x2="11" y2="21" stroke="#E11D48" stroke-width="2"/></svg>`},
+  {label:'💬',svg:`<svg width="22" height="22" viewBox="0 0 22 22"><rect x="1" y="1" width="18" height="13" rx="3" fill="#B3D9FF" stroke="#0284C7" stroke-width="0.8"/><polygon points="4,14 4,20 9,14" fill="#B3D9FF" stroke="#0284C7" stroke-width="0.8"/></svg>`},
+  {label:'🎯',svg:`<svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="9.5" fill="none" stroke="#E11D48" stroke-width="1.2"/><circle cx="11" cy="11" r="6.5" fill="none" stroke="#E11D48" stroke-width="1"/><circle cx="11" cy="11" r="3.5" fill="#E11D48"/><circle cx="11" cy="11" r="1.2" fill="white"/></svg>`},
+];
+function buildStickerBar() {
+  const bar=el('sticker-bar'); if(!bar) return;
+  bar.innerHTML=STICKERS.map((s,i)=>`<span class="sticker-item" title="${s.label}" onclick="insertSticker(${i})">${s.svg}</span>`).join('');
+}
+function insertSticker(i) {
+  const s=STICKERS[i], editor=el('rich-editor'); editor.focus();
+  document.execCommand('insertHTML',false,`<span class="sticker-inline" contenteditable="false">${s.svg}</span>&nbsp;`);
+}
+function execRich(cmd,val) { el('rich-editor').focus(); document.execCommand(cmd,false,val||null); }
+function applyHighlight(color) { el('rich-editor').focus(); document.execCommand('hiliteColor',false,color); }
+function triggerImageInsert() { el('img-insert-input').click(); }
+function insertImageFromFile(input) {
+  const file=input.files[0]; if(!file) return;
+  const r=new FileReader(); r.onload=ev=>{ el('rich-editor').focus(); document.execCommand('insertHTML',false,`<img src="${ev.target.result}" style="max-width:100%;border-radius:6px;margin:6px 0;">`); };
+  r.readAsDataURL(file); input.value='';
+}
+document.addEventListener('paste', e => {
+  const editor=el('rich-editor'); if(!editor||!editor.matches(':focus')) return;
+  const items=(e.clipboardData||window.clipboardData).items;
+  for(const item of items) { if(item.type.startsWith('image/')) { e.preventDefault(); const blob=item.getAsFile(); const r=new FileReader(); r.onload=ev=>document.execCommand('insertHTML',false,`<img src="${ev.target.result}" style="max-width:100%;border-radius:6px;margin:6px 0;">`); r.readAsDataURL(blob); break; } }
+});
+function setNoteType(t) { noteType=t; document.querySelectorAll('[data-notetype]').forEach(b=>b.classList.toggle('active',b.dataset.notetype===t)); el('postit-color-row').style.display=t==='postit'?'':'none'; }
+function setPostitColor(c) { postitColor=c; document.querySelectorAll('[data-picolor]').forEach(d=>d.classList.toggle('active',d.dataset.picolor===c)); }
+document.querySelectorAll('[data-picolor]').forEach(d=>d.addEventListener('click',()=>setPostitColor(d.dataset.picolor)));
+function setNoteView(v) { noteView=v; localStorage.setItem('yw_noteview',v); el('view-list-btn').classList.toggle('active',v==='list'); el('view-postit-btn').classList.toggle('active',v==='postit'); renderNotes(); }
+function postitColorHex(cls) { const map={'postit-yellow':'#FFF9A3','postit-mint':'#ADFFD6','postit-peach':'#FFCDB3','postit-blue':'#B3D9FF','postit-lavender':'#DFC6FF','postit-white':'#FFFFFF'}; return map[cls]||'#FFF9A3'; }
+function fmtDate(iso) { return new Date(iso).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'}); }
+function noteCardHTML(n) {
+  return `<div class="note-card"><div class="note-card-header"><div><div class="note-project">${n.project}${n.client?' · '+n.client:''}</div></div><div class="note-actions"><span class="note-meta">${fmtDate(n.created_at||n.created||new Date().toISOString())}</span><button class="btn btn-ghost btn-sm" onclick="editNote('${n.id}')">✎</button><button class="btn btn-danger btn-sm" onclick="deleteNote('${n.id}')">✕</button></div></div><div class="note-body">${n.body}</div></div>`;
+}
+function renderNotes() {
+  const notes=state.notes, list=el('notes-list');
+  if(!notes.length) { list.innerHTML='<div class="empty"><div class="empty-icon">📝</div><div class="empty-txt">Sin notas.</div></div>'; return; }
+  if(noteView==='postit') {
+    const postits=notes.filter(n=>n.type==='postit'), normals=notes.filter(n=>n.type!=='postit');
+    let html='';
+    if(postits.length) html+=`<div class="section-title" style="margin-bottom:16px;">Post-its</div><div class="postit-grid">${postits.map((n,i)=>`<div class="postit ${n.color||'postit-yellow'}" style="--rot:${POSTIT_ROTS[i%POSTIT_ROTS.length]}"><div class="postit-label">${n.project}${n.client?' · '+n.client:''}</div><div class="postit-text">${n.body}</div><div class="postit-footer"><button class="btn btn-sm" style="background:rgba(0,0,0,0.1);border:none;cursor:pointer;" onclick="editNote('${n.id}')">✎</button><button class="btn btn-sm" style="background:rgba(255,0,0,0.12);border:none;cursor:pointer;" onclick="deleteNote('${n.id}')">✕</button></div></div>`).join('')}</div>`;
+    if(normals.length) html+=`<div class="section-title" style="margin-bottom:16px;">Notas</div>${normals.map(n=>noteCardHTML(n)).join('')}`;
+    list.innerHTML=html;
+  } else { list.innerHTML=notes.map(n=>n.type==='postit'?`<div class="note-card"><div class="note-card-header"><div style="display:flex;align-items:center;gap:8px;"><span style="width:10px;height:10px;border-radius:50%;background:${postitColorHex(n.color)};flex-shrink:0;border:1px solid rgba(0,0,0,0.1);"></span><span class="note-project">${n.project}${n.client?' · '+n.client:''}</span><span class="badge badge-progress" style="font-size:9px;">Post-it</span></div><div class="note-actions"><span class="note-meta">${fmtDate(n.created_at||n.created||new Date().toISOString())}</span><button class="btn btn-ghost btn-sm" onclick="editNote('${n.id}')">✎</button><button class="btn btn-danger btn-sm" onclick="deleteNote('${n.id}')">✕</button></div></div><div class="note-body" style="background:${postitColorHex(n.color)};opacity:0.95;">${n.body}</div></div>`:noteCardHTML(n)).join(''); }
+}
+function editNote(id) {
+  const n=state.notes.find(n=>n.id===id); if(!n) return;
+  el('note-id').value=n.id; el('note-project').value=n.project; el('note-client').value=n.client||'';
+  el('rich-editor').innerHTML=n.body; setNoteType(n.type||'note'); setPostitColor(n.color||'postit-yellow');
+  buildStickerBar(); openModal('modal-note');
+}
+setNoteView(noteView);
+
 /* ─── RENDER ALL ─────────────────────────────────────────── */
 function renderAll() {
   refreshClientSelects();
