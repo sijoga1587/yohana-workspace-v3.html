@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="es" data-mode="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yohana · Workspace</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── DESIGN TOKENS ─────────────────────────────────────── */
+:root {
+  --font: 'Montserrat', sans-serif;
+
+  /* Light */
+  --bg:        #FFFFFF;
+  --bg2:       #F7F8FA;
+  --bg3:       #F0F2F5;
+  --surface:   #FFFFFF;
+  --border:    #E8EAED;
+  --border2:   #D1D5DB;
+  --text:      #111827;
+  --text2:     #4B5563;
+  --text3:     #9CA3AF;
+  --accent:    #6366F1;
+  --accent-bg: rgba(99,102,241,0.08);
+  --sidebar-w: 240px;
+  --radius:    8px;
+  --radius-lg: 12px;
+  --shadow:    0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+[data-mode="dark"] {
+  --bg:        #0F1117;
+  --bg2:       #161B27;
+  --bg3:       #1E2536;
+  --surface:   #1A2035;
+  --border:    #2A3347;
+  --border2:   #374357;
+  --text:      #F1F5F9;
+  --text2:     #94A3B8;
+  --text3:     #4B5563;
+  --accent:    #818CF8;
+  --accent-bg: rgba(129,140,248,0.12);
+  --shadow:    0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+/* TEMAS PASTEL — solo cambian el acento */
+[data-theme="mint"]     { --accent: #16A34A; --accent-bg: rgba(22,163,74,0.08); }
+[data-theme="peach"]    { --accent: #EA580C; --accent-bg: rgba(234,88,12,0.08); }
+[data-theme="lavender"] { --accent: #9333EA; --accent-bg: rgba(147,51,234,0.08); }
+[data-theme="sky"]      { --accent: #0284C7; --accent-bg: rgba(2,132,199,0.08); }
+[data-theme="rose"]     { --accent: #E11D48; --accent-bg: rgba(225,29,72,0.08); }
+[data-theme="default"]  { --accent: #6366F1; --accent-bg: rgba(99,102,241,0.08); }
+
+[data-mode="dark"][data-theme="mint"]     { --accent: #4ADE80; --accent-bg: rgba(74,222,128,0.1); }
+[data-mode="dark"][data-theme="peach"]    { --accent: #FB923C; --accent-bg: rgba(251,146,60,0.1); }
+[data-mode="dark"][data-theme="lavender"] { --accent: #C084FC; --accent-bg: rgba(192,132,252,0.1); }
+[data-mode="dark"][data-theme="sky"]      { --accent: #38BDF8; --accent-bg: rgba(56,189,248,0.1); }
+[data-mode="dark"][data-theme="rose"]     { --accent: #FB7185; --accent-bg: rgba(251,113,133,0.1); }
+[data-mode="dark"][data-theme="default"]  { --accent: #818CF8; --accent-bg: rgba(129,140,248,0.1); }
+
+/* ─── BASE ───────────────────────────────────────────────── */
+html, body { height: 100%; font-family: var(--font); background: var(--bg2); color: var(--text); font-size: 14px; line-height: 1.6; }
+
+/* ─── LAYOUT ─────────────────────────────────────────────── */
+.layout { display: flex; height: 100vh; overflow: hidden; }
+
+/* ─── SIDEBAR ────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.sidebar-top {
+  padding: 20px 16px 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.brand-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; cursor: pointer;
+  overflow: hidden;
+  background-size: cover; background-position: center;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.brand-avatar:hover { opacity: 0.8; }
+
+.brand-info { min-width: 0; }
+.brand-name  { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand-role  { font-size: 10px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* SEARCH */
+.search-wrap {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  transition: border-color 0.15s;
+}
+.search-box:focus-within { border-color: var(--accent); }
+.search-box svg { flex-shrink: 0; color: var(--text3); }
+.search-box input {
+  border: none; background: transparent; outline: none;
+  font-family: var(--font); font-size: 12px; color: var(--text);
+  width: 100%;
+}
+.search-box input::placeholder { color: var(--text3); }
+
+/* NAV */
+.nav-section { padding: 12px 8px 4px; }
+.nav-label { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; padding: 0 8px; margin-bottom: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px; font-weight: 500; color: var(--text2);
+  transition: all 0.15s;
+  border: none; background: none; width: 100%; text-align: left;
+}
+.nav-item:hover { background: var(--bg2); color: var(--text); }
+.nav-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+.nav-item svg { flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--accent);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px; text-align: center;
+}
+
+/* SIDEBAR BOTTOM */
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 12px 8px;
+  border-top: 1px solid var(--border);
+}
+
+.theme-row { display: flex; align-items: center; gap: 6px; padding: 0 8px; margin-bottom: 10px; }
+.theme-label-txt { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 2px; }
+.theme-dot {
+  width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.theme-dot:hover { transform: scale(1.15); }
+.theme-dot.active { border-color: var(--text); transform: scale(1.1); }
+
+.mode-btn {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 7px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg2); color: var(--text2);
+  font-family: var(--font); font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.mode-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ─── MAIN ───────────────────────────────────────────────── */
+.main {
+  flex: 1; overflow-y: auto;
+  background: var(--bg2);
+}
+
+/* ─── SCREENS ────────────────────────────────────────────── */
+.screen { display: none; padding: 28px 32px; min-height: 100%; }
+.screen.active { display: block; animation: fadeUp 0.22s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ─── PAGE HEADER ─────────────────────────────────────────── */
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: var(--text3); font-weight: 400; }
+
+/* ─── STATS ──────────────────────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.stat-card .label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.stat-card .value { font-size: 28px; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
+.stat-card .sub   { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* ─── SECTION TITLE ──────────────────────────────────────── */
+.section-title { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.section-title::after { content:''; flex:1; height:1px; background: var(--border); }
+
+/* ─── CARDS GRID ─────────────────────────────────────────── */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.card:hover { border-color: var(--border2); box-shadow: var(--shadow-md); }
+.card-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px; line-height: 1.4; }
+.card-meta  { font-size: 12px; color: var(--text3); }
+.card-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+/* ─── BADGE ──────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 20px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.badge-high    { background: rgba(220,38,38,0.1);  color: #DC2626; }
+.badge-medium  { background: rgba(234,179,8,0.12); color: #CA8A04; }
+.badge-low     { background: rgba(34,197,94,0.1);  color: #16A34A; }
+.badge-admin   { background: rgba(99,102,241,0.1); color: var(--accent); }
+.badge-ops     { background: rgba(236,72,153,0.1); color: #DB2777; }
+.badge-pending { background: rgba(234,179,8,0.1);  color: #B45309; }
+.badge-progress{ background: rgba(59,130,246,0.1); color: #1D4ED8; }
+.badge-done    { background: rgba(34,197,94,0.1);  color: #15803D; }
+.badge-suspend { background: rgba(107,114,128,0.1);color: #6B7280; }
+.badge-none    { background: rgba(156,163,175,0.1);color: #9CA3AF; }
+.badge-finish  { background: rgba(134,239,172,0.2);color: #15803D; }
+
+/* ─── TABLE ──────────────────────────────────────────────── */
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 24px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { background: var(--bg2); padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--bg2); }
+
+/* ─── FORM ───────────────────────────────────────────────── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-full  { grid-column: 1/-1; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 10px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; }
+.field input, .field select, .field textarea {
+  font-family: var(--font); font-size: 13px; font-weight: 400;
+  color: var(--text); background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 9px 11px;
+  outline: none; transition: border-color 0.15s;
+  width: 100%;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); background: var(--surface); }
+.field textarea { resize: vertical; min-height: 80px; }
+
+/* ─── BUTTON ─────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font); font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  padding: 9px 16px; border-radius: var(--radius);
+  border: none; cursor: pointer; transition: all 0.15s;
+}
+.btn-primary  { background: var(--accent); color: white; }
+.btn-primary:hover  { opacity: 0.9; transform: translateY(-1px); }
+.btn-ghost    { background: var(--bg2); color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover    { border-color: var(--accent); color: var(--accent); }
+.btn-danger   { background: rgba(220,38,38,0.1); color: #DC2626; border: 1px solid rgba(220,38,38,0.2); }
+.btn-danger:hover   { background: rgba(220,38,38,0.18); }
+.btn-sm { padding: 5px 10px; font-size: 10px; }
+
+/* ─── MODAL ──────────────────────────────────────────────── */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(3px);
+  z-index: 100; align-items: center; justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 28px;
+  width: 90%; max-width: 560px; max-height: 85vh; overflow-y: auto;
+  box-shadow: var(--shadow-md);
+  animation: slideUp 0.22s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+.modal-title  { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+.modal-close  { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 20px; line-height: 1; transition: color 0.15s; }
+.modal-close:hover { color: var(--text); transform: rotate(90deg); transition: transform 0.2s; }
+
+/* ─── PROGRESS BAR ───────────────────────────────────────── */
+.progress-wrap { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.4s ease; }
+
+/* ─── EMPTY STATE ─────────────────────────────────────────── */
+.empty { text-align: center; padding: 40px; color: var(--text3); }
+.empty-icon { font-size: 32px; margin-bottom: 8px; }
+.empty-txt  { font-size: 13px; }
+
+/* ─── SEARCH RESULTS OVERLAY ─────────────────────────────── */
+.search-results {
+  position: fixed; top: 60px; left: calc(var(--sidebar-w) + 32px);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+  width: 400px; max-height: 360px; overflow-y: auto; z-index: 50;
+  display: none;
+}
+.search-results.open { display: block; }
+.search-result-item {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: var(--bg2); }
+.sri-type  { font-size: 9px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.sri-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.sri-meta  { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+/* ─── NOTE CARD ──────────────────────────────────────────── */
+.note-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0; margin-bottom: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.note-card:hover { box-shadow: var(--shadow-md); }
+.note-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  gap: 12px;
+}
+.note-card .note-project { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
+.note-card .note-meta  { font-size: 11px; color: var(--text3); white-space: nowrap; }
+.note-card .note-body  { padding: 16px; font-size: 13px; color: var(--text); line-height: 1.7; }
+.note-card .note-body img { max-width: 100%; border-radius: 6px; margin: 8px 0; display: block; }
+.note-card .note-body mark { background: rgba(255,220,0,0.35); padding: 1px 3px; border-radius: 2px; }
+.note-card .note-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* POST-IT STYLES */
+.postit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.postit {
+  padding: 16px 16px 24px;
+  border-radius: 2px;
+  min-height: 160px;
+  box-shadow: 2px 3px 10px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08);
+  position: relative;
+  transform: rotate(var(--rot, -1.2deg));
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: default;
+  word-break: break-word;
+}
+.postit:hover { transform: rotate(0deg) translateY(-3px); box-shadow: 3px 6px 18px rgba(0,0,0,0.18); z-index: 2; }
+.postit::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 40px; height: 8px; background: rgba(0,0,0,0.08); border-radius: 0 0 4px 4px; }
+.postit-label { font-size: 9px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; opacity: 0.55; margin-bottom: 8px; }
+.postit-text { font-size: 13px; line-height: 1.6; }
+.postit-text mark { background: rgba(0,0,0,0.12); border-radius: 2px; padding: 1px 2px; }
+.postit-footer { position: absolute; bottom: 10px; right: 12px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; }
+.postit:hover .postit-footer { opacity: 1; }
+
+/* POSTIT COLORS */
+.postit-yellow { background: #FFF9A3; color: #3D3000; }
+.postit-mint   { background: #ADFFD6; color: #003D1F; }
+.postit-peach  { background: #FFCDB3; color: #3D1500; }
+.postit-blue   { background: #B3D9FF; color: #002B3D; }
+.postit-lavender { background: #DFC6FF; color: #250050; }
+.postit-white  { background: #FFFFFF; color: #1a1a1a; border: 1px solid #E0E0E0; }
+
+/* STICKERS */
+.sticker-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+.sticker-item { cursor: pointer; transition: transform 0.15s; }
+.sticker-item:hover { transform: scale(1.25); }
+
+/* RICH EDITOR */
+.rich-editor-wrap { position: relative; }
+.rich-toolbar {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  align-items: center;
+}
+.rich-toolbar .t-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+.t-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  border: 1px solid transparent; border-radius: 5px;
+  background: none; cursor: pointer; color: var(--text2);
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  transition: all 0.12s;
+}
+.t-btn:hover { background: var(--border); color: var(--text); }
+.t-btn.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+.t-select {
+  font-family: var(--font); font-size: 11px; font-weight: 600;
+  border: 1px solid var(--border); border-radius: 5px;
+  background: var(--surface); color: var(--text2);
+  padding: 4px 6px; height: 28px; cursor: pointer; outline: none;
+}
+.t-select:focus { border-color: var(--accent); }
+.rich-editor {
+  min-height: 200px; max-height: 400px; overflow-y: auto;
+  padding: 14px 16px;
+  outline: none; color: var(--text);
+  font-family: 'Montserrat', sans-serif; font-size: 13px; line-height: 1.8;
+  background: var(--surface);
+}
+.rich-editor:empty::before { content: attr(data-placeholder); color: var(--text3); pointer-events: none; }
+.rich-editor img { max-width: 100%; border-radius: 6px; margin: 6px 0; display: block; }
+.rich-editor mark { background: rgba(255,220,0,0.4); padding: 1px 3px; border-radius: 2px; }
+.rich-editor .sticker-inline { display: inline-block; vertical-align: middle; margin: 0 4px; }
+
+/* NOTE TYPE TOGGLE */
+.note-type-row { display: flex; gap: 8px; margin-bottom: 4px; }
+.note-type-btn {
+  flex: 1; padding: 8px; border-radius: var(--radius);
+  border: 2px solid var(--border); background: var(--bg2);
+  font-family: var(--font); font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.4px; cursor: pointer;
+  color: var(--text2); transition: all 0.15s;
+}
+.note-type-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+/* COLOR PICKER ROW */
+.color-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.color-dot {
+  width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s;
+}
+.color-dot:hover { transform: scale(1.2); }
+.color-dot.active { border-color: var(--text); transform: scale(1.1); }
+
+/* HIGHLIGHT COLORS */
+.hl-yellow { background: rgba(255,220,0,0.4); }
+.hl-green  { background: rgba(0,200,100,0.25); }
+.hl-blue   { background: rgba(0,120,255,0.2); }
+.hl-pink   { background: rgba(255,50,150,0.2); }
+
+/* NOTEBOOK LAYOUT */
+.notebook-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.notebook-view-toggle { display: flex; gap: 6px; }
+.view-btn { padding: 5px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg2); color: var(--text2); font-family: var(--font); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.4px; }
+.view-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* ─── DRIVER TABLE ─────────────────────────────────────────── */
+.driver-pct { font-weight: 700; color: var(--accent); }
+
+/* ─── DAY CHIPS (periodicidad) ──────────────────────────────── */
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 10px; border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface); color: var(--text2);
+  font-size: 11px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s;
+}
+.day-chip input { display: none; }
+.day-chip:has(input:checked) {
+  background: var(--accent-bg); border-color: var(--accent); color: var(--accent);
+}
+
+/* ─── RECUR BADGE ─────────────────────────────────────────── */
+.recur-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(99,102,241,0.08); color: var(--accent);
+  font-size: 9px; font-weight: 700; padding: 2px 7px;
+  border-radius: 10px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+/* ─── CLIENT CARD ─────────────────────────────────────────── */
+.client-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.client-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--client-color, var(--accent));
+}
+.client-card:hover { box-shadow: var(--shadow-md); }
+.client-card .client-initial {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--client-color, var(--accent));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: white;
+  margin-bottom: 12px;
+}
+.client-card .client-name   { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.client-card .client-sector { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
+.client-card .client-meta   { font-size: 12px; color: var(--text2); }
+.client-card .client-actions { display: flex; gap: 6px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+/* ─── SCROLLBAR ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+</style>
+</head>
+<body>
+<input type="file" id="avatar-file" style="display:none" accept="image/*">
+
+<div class="layout">
+<!-- ───────────── SIDEBAR ───────────── -->
+<aside class="sidebar">
+  <div class="sidebar-top">
+    <div class="brand">
+      <div class="brand-avatar" id="avatar-el" title="Cambiar foto">👤</div>
+      <div class="brand-info">
+        <div class="brand-name" id="profile-name">Yohana García</div>
+        <div class="brand-role">Especialista CX</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="search-input" type="text" placeholder="Buscar tareas, proyectos…">
+    </div>
+    <div class="search-results" id="search-results"></div>
+  </div>
+
+  <nav style="flex:1; padding-bottom:8px;">
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <button class="nav-item active" data-nav="dashboard">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-nav="tasks">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Tareas
+        <span class="nav-badge" id="badge-tasks">0</span>
+      </button>
+      <button class="nav-item" data-nav="projects">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        Proyectos
+      </button>
+      <button class="nav-item" data-nav="drivers">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        Drivers
+      </button>
+      <button class="nav-item" data-nav="notebook">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Cuaderno
+      </button>
+      <button class="nav-item" data-nav="clients">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Clientes
+      </button>
+    </div>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div class="theme-row">
+      <span class="theme-label-txt">Tema</span>
+      <div class="theme-dot active" data-theme="default" style="background:#6366F1" title="Índigo"></div>
+      <div class="theme-dot" data-theme="mint"     style="background:#16A34A" title="Verde"></div>
+      <div class="theme-dot" data-theme="peach"    style="background:#EA580C" title="Naranja"></div>
+      <div class="theme-dot" data-theme="lavender" style="background:#9333EA" title="Violeta"></div>
+      <div class="theme-dot" data-theme="sky"      style="background:#0284C7" title="Azul"></div>
+      <div class="theme-dot" data-theme="rose"     style="background:#E11D48" title="Rosa"></div>
+    </div>
+    <button class="mode-btn" id="mode-toggle">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="mode-icon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <span id="mode-label">Modo oscuro</span>
+    </button>
+  </div>
+</aside>
+
+<!-- ───────────── MAIN ───────────── -->
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <div class="screen active" id="screen-dashboard">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub" id="dash-date"></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="label">Tareas pendientes</div><div class="value" id="s-pending">0</div></div>
+      <div class="stat-card"><div class="label">En progreso</div><div class="value" id="s-progress">0</div></div>
+      <div class="stat-card"><div class="label">Completadas</div><div class="value" id="s-done">0</div></div>
+      <div class="stat-card"><div class="label">Proyectos activos</div><div class="value" id="s-projects">0</div></div>
+      <div class="stat-card"><div class="label">Horas mes</div><div class="value" id="s-hours">0</div></div>
+    </div>
+
+    <div class="section-title">Clientes activos</div>
+    <div class="cards-grid" id="dash-clients"></div>
+
+    <div class="section-title">Tareas de hoy</div>
+    <div class="cards-grid" id="dash-today"></div>
+  </div>
+
+  <!-- TAREAS -->
+  <div class="screen" id="screen-tasks">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+      <div><div class="page-title">Tareas</div><div class="page-sub">Pendientes y seguimiento diario</div></div>
+      <button class="btn btn-primary" id="btn-new-task">+ Nueva tarea</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Descripción</th><th>Cliente</th><th>Entrega</th>
+          <th>Prioridad</th><th>Tipo</th><th>Estado</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="tasks-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PROYECTOS -->
+  <div class="screen" id="screen-projects">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+      <div><div class="page-title">Proyectos</div><div class="page-sub">Backlog y seguimiento por cliente</div></div>
+      <button class="btn btn-primary" id="btn-new-project">+ Nuevo proyecto</button>
+    </div>
+
+    <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;" id="project-filter-btns">
+      <button class="btn btn-ghost btn-sm active-filter" data-filter="all">Todos</button>
+      <button class="btn btn-ghost btn-sm" data-filter="En proceso">En proceso</button>
+      <button class="btn btn-ghost btn-sm" data-filter="Finalizado">Finalizado</button>
+      <button class="btn btn-ghost btn-sm" data-filter="Sin Iniciar">Sin iniciar</button>
+      <button class="btn btn-ghost btn-sm" data-filter="Suspendido">Suspendido</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Cliente</th><th>Proyecto</th><th>Impacto</th>
+          <th>Prioridad</th><th>Estado</th><th>F. Solicitud</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="projects-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DRIVERS -->
+  <div class="screen" id="screen-drivers">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+      <div><div class="page-title">Drivers</div><div class="page-sub">% de dedicación mensual por cliente</div></div>
+      <button class="btn btn-primary" id="btn-new-driver">+ Registrar horas</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Cliente</th><th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>S5</th>
+          <th>Total hrs</th><th>%</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="drivers-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CUADERNO -->
+  <div class="screen" id="screen-notebook">
+    <div class="page-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+        <div><div class="page-title">Cuaderno</div><div class="page-sub">Notas enriquecidas, post-its y contexto de proyectos</div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <div class="notebook-view-toggle">
+            <button class="view-btn active" id="view-list-btn" onclick="setNoteView('list')">Lista</button>
+            <button class="view-btn" id="view-postit-btn" onclick="setNoteView('postit')">Post-its</button>
+          </div>
+          <button class="btn btn-primary" id="btn-new-note">+ Nueva nota</button>
+        </div>
+      </div>
+    </div>
+    <div id="notes-list"></div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div class="screen" id="screen-clients">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+      <div><div class="page-title">Clientes</div><div class="page-sub">Administra tu cartera de clientes</div></div>
+      <button class="btn btn-primary" id="btn-new-client">+ Nuevo cliente</button>
+    </div>
+    <div class="cards-grid" id="clients-grid"></div>
+  </div>
+
+</main>
+</div>
+
+<!-- ─── MODALS ──────────────────────────────────────────── -->
+
+<!-- TASK MODAL -->
+<div class="modal-backdrop" id="modal-task">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <div class="modal-title" id="task-modal-title">Nueva tarea</div>
+      <button class="modal-close" onclick="closeModal('modal-task')">✕</button>
+    </div>
+    <form id="form-task" style="display:flex;flex-direction:column;gap:14px;">
+      <input type="hidden" id="task-id">
+      <div class="form-grid">
+        <div class="field form-full">
+          <label>Descripción *</label>
+          <input type="text" id="task-desc" required placeholder="¿Qué hay que hacer?">
+        </div>
+        <div class="field">
+          <label>Cliente *</label>
+          <select id="task-client" required></select>
+        </div>
+        <div class="field">
+          <label>Fecha entrega *</label>
+          <input type="date" id="task-date" required>
+        </div>
+        <div class="field">
+          <label>Prioridad *</label>
+          <select id="task-priority">
+            <option value="Alta">Alta</option>
+            <option value="Media" selected>Media</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tipo</label>
+          <select id="task-type">
+            <option value="Operación">Operación</option>
+            <option value="Administrativo">Administrativo</option>
+          </select>
+        </div>
+
+        <!-- PERIODICIDAD -->
+        <div class="field form-full" style="border:1px solid var(--border);border-radius:var(--radius);padding:12px;background:var(--bg2);">
+          <label style="margin-bottom:10px;display:block;">Periodicidad</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="field">
+              <label>Frecuencia</label>
+              <select id="task-recur" onchange="toggleRecurFields()">
+                <option value="none">Sin repetición</option>
+                <option value="daily">Diaria</option>
+                <option value="weekly">Semanal</option>
+                <option value="biweekly">Quincenal</option>
+                <option value="monthly">Mensual</option>
+                <option value="custom">Personalizada</option>
+              </select>
+            </div>
+            <div class="field" id="recur-end-wrap" style="display:none;">
+              <label>Termina el</label>
+              <input type="date" id="task-recur-end" placeholder="Sin fecha fin">
+            </div>
+          </div>
+          <div id="recur-days-wrap" style="display:none;margin-top:10px;">
+            <label class="form-label" style="margin-bottom:6px;">Días de la semana</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <label class="day-chip"><input type="checkbox" value="1" id="rd1"> Lun</label>
+              <label class="day-chip"><input type="checkbox" value="2" id="rd2"> Mar</label>
+              <label class="day-chip"><input type="checkbox" value="3" id="rd3"> Mié</label>
+              <label class="day-chip"><input type="checkbox" value="4" id="rd4"> Jue</label>
+              <label class="day-chip"><input type="checkbox" value="5" id="rd5"> Vie</label>
+              <label class="day-chip"><input type="checkbox" value="6" id="rd6"> Sáb</label>
+            </div>
+          </div>
+          <div id="recur-custom-wrap" style="display:none;margin-top:10px;">
+            <label class="form-label" style="margin-bottom:6px;">Cada cuántos días</label>
+            <input type="number" id="task-recur-interval" min="1" max="365" value="7" style="width:100px;">
+          </div>
+        </div>
+
+        <div class="field form-full">
+          <label>Observaciones</label>
+          <textarea id="task-obs" placeholder="Notas de contexto, datos de reuniones…"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;">Guardar</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-task')" style="flex:1;">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="modal-backdrop" id="modal-client">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title" id="client-modal-title">Nuevo cliente</div>
+      <button class="modal-close" onclick="closeModal('modal-client')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <input type="hidden" id="client-id">
+      <div class="field">
+        <label>Nombre del cliente *</label>
+        <input type="text" id="client-name" placeholder="Ej: Bancolombia" required>
+      </div>
+      <div class="field">
+        <label>Sector / Industria</label>
+        <input type="text" id="client-sector" placeholder="Ej: Banca, Seguros, Telecomunicaciones">
+      </div>
+      <div class="field">
+        <label>Contacto principal</label>
+        <input type="text" id="client-contact" placeholder="Nombre del contacto">
+      </div>
+      <div class="field">
+        <label>Color identificador</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="client-color-row">
+          <div class="color-dot active" data-ccolor="#6366F1" style="background:#6366F1;"></div>
+          <div class="color-dot" data-ccolor="#16A34A" style="background:#16A34A;"></div>
+          <div class="color-dot" data-ccolor="#EA580C" style="background:#EA580C;"></div>
+          <div class="color-dot" data-ccolor="#9333EA" style="background:#9333EA;"></div>
+          <div class="color-dot" data-ccolor="#0284C7" style="background:#0284C7;"></div>
+          <div class="color-dot" data-ccolor="#E11D48" style="background:#E11D48;"></div>
+          <div class="color-dot" data-ccolor="#CA8A04" style="background:#CA8A04;"></div>
+          <div class="color-dot" data-ccolor="#0F766E" style="background:#0F766E;"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button type="button" class="btn btn-primary" style="flex:1;" onclick="saveClient()">Guardar</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-client')" style="flex:1;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div class="modal-backdrop" id="modal-project">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="proj-modal-title">Nuevo proyecto</div>
+      <button class="modal-close" onclick="closeModal('modal-project')">✕</button>
+    </div>
+    <form id="form-project" style="display:flex;flex-direction:column;gap:14px;">
+      <input type="hidden" id="proj-id">
+      <div class="form-grid">
+        <div class="field">
+          <label>Cliente *</label>
+          <select id="proj-client" required>
+            <option value="">— Selecciona —</option>
+            <option>Línea Directa</option>
+            <option>Colmena Seguros</option>
+            <option>Enel</option>
+            <option>Tigo Business</option>
+            <option>BBVA Fidelización</option>
+            <option>BBVA Ventas</option>
+            <option>Colmedica Cobranzas</option>
+            <option>Interno</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nombre del proyecto *</label>
+          <input type="text" id="proj-name" required placeholder="Nombre del proyecto">
+        </div>
+        <div class="field form-full">
+          <label>Descripción</label>
+          <textarea id="proj-desc" placeholder="¿Qué se busca lograr?"></textarea>
+        </div>
+        <div class="field">
+          <label>Impacto</label>
+          <input type="text" id="proj-impact" placeholder="Ej: Experiencia de cliente">
+        </div>
+        <div class="field">
+          <label>Prioridad</label>
+          <select id="proj-priority">
+            <option value="Alta">Alta</option>
+            <option value="Media" selected>Media</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <select id="proj-status">
+            <option>Sin Iniciar</option>
+            <option selected>En proceso</option>
+            <option>Finalizado</option>
+            <option>Suspendido</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Fecha solicitud</label>
+          <input type="date" id="proj-date">
+        </div>
+        <div class="field form-full">
+          <label>Observación / ¿Qué logramos?</label>
+          <textarea id="proj-obs" placeholder="Seguimiento, novedades, logros…"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;">Guardar</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-project')" style="flex:1;">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DRIVER MODAL -->
+<div class="modal-backdrop" id="modal-driver">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Registrar horas</div>
+      <button class="modal-close" onclick="closeModal('modal-driver')">✕</button>
+    </div>
+    <form id="form-driver" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="field">
+        <label>Cliente *</label>
+        <select id="drv-client" required>
+          <option value="">— Selecciona —</option>
+          <option>Línea Directa</option><option>Colmena Seguros</option>
+          <option>Enel</option><option>Tigo Business</option>
+          <option>BBVA Fidelización</option><option>BBVA Ventas</option>
+          <option>Colmedica Cobranzas</option><option>Interno</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
+        <div class="field"><label>S1</label><input type="number" id="drv-s1" min="0" value="0"></div>
+        <div class="field"><label>S2</label><input type="number" id="drv-s2" min="0" value="0"></div>
+        <div class="field"><label>S3</label><input type="number" id="drv-s3" min="0" value="0"></div>
+        <div class="field"><label>S4</label><input type="number" id="drv-s4" min="0" value="0"></div>
+        <div class="field"><label>S5</label><input type="number" id="drv-s5" min="0" value="0"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;">Guardar</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-driver')" style="flex:1;">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- NOTE MODAL -->
+<div class="modal-backdrop" id="modal-note">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <div class="modal-title">Nueva nota</div>
+      <button class="modal-close" onclick="closeModal('modal-note')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <input type="hidden" id="note-id">
+
+      <!-- TIPO -->
+      <div class="note-type-row">
+        <button class="note-type-btn active" data-notetype="note" onclick="setNoteType('note')">📄 Nota</button>
+        <button class="note-type-btn" data-notetype="postit" onclick="setNoteType('postit')">📌 Post-it</button>
+      </div>
+
+      <!-- META -->
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="field">
+          <label>Proyecto / Contexto *</label>
+          <input type="text" id="note-project" required placeholder="Ej: Modelo de Relación LD">
+        </div>
+        <div class="field">
+          <label>Cliente</label>
+          <select id="note-client">
+            <option value="">— General —</option>
+            <option>Línea Directa</option><option>Colmena Seguros</option>
+            <option>Enel</option><option>Tigo Business</option>
+            <option>BBVA Fidelización</option><option>BBVA Ventas</option>
+            <option>Colmedica Cobranzas</option><option>Interno</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- COLOR POST-IT (hidden initially) -->
+      <div id="postit-color-row" style="display:none;">
+        <label class="form-label" style="margin-bottom:6px;">Color del post-it</label>
+        <div class="color-row">
+          <div class="color-dot active" data-picolor="postit-yellow" style="background:#FFF9A3;" title="Amarillo"></div>
+          <div class="color-dot" data-picolor="postit-mint" style="background:#ADFFD6;" title="Verde menta"></div>
+          <div class="color-dot" data-picolor="postit-peach" style="background:#FFCDB3;" title="Durazno"></div>
+          <div class="color-dot" data-picolor="postit-blue" style="background:#B3D9FF;" title="Azul"></div>
+          <div class="color-dot" data-picolor="postit-lavender" style="background:#DFC6FF;" title="Lavanda"></div>
+          <div class="color-dot" data-picolor="postit-white" style="background:#FFFFFF;border:1px solid #ccc;" title="Blanco"></div>
+        </div>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="rich-editor-wrap">
+        <div class="rich-toolbar">
+          <!-- FUENTES -->
+          <select class="t-select" id="font-picker" onchange="execRich('fontName', this.value)" title="Fuente">
+            <option value="Montserrat">Montserrat</option>
+            <option value="Georgia">Georgia</option>
+            <option value="'Courier New'">Courier</option>
+            <option value="'Comic Sans MS'">Comic Sans</option>
+            <option value="'Times New Roman'">Times New Roman</option>
+          </select>
+          <select class="t-select" id="size-picker" onchange="execRich('fontSize', this.value)" title="Tamaño" style="width:52px;">
+            <option value="2">S</option>
+            <option value="3" selected>M</option>
+            <option value="4">L</option>
+            <option value="5">XL</option>
+          </select>
+          <div class="t-sep"></div>
+          <!-- FORMATO -->
+          <button class="t-btn" onclick="execRich('bold')" title="Negrita"><strong>B</strong></button>
+          <button class="t-btn" onclick="execRich('italic')" title="Cursiva"><em>I</em></button>
+          <button class="t-btn" onclick="execRich('underline')" title="Subrayado" style="text-decoration:underline">U</button>
+          <button class="t-btn" onclick="execRich('strikeThrough')" title="Tachado" style="text-decoration:line-through">S</button>
+          <div class="t-sep"></div>
+          <!-- RESALTAR -->
+          <button class="t-btn hl-yellow" onclick="applyHighlight('#FFF176')" title="Resaltar amarillo" style="font-size:11px;width:22px;height:22px;border-radius:3px;">A</button>
+          <button class="t-btn hl-green"  onclick="applyHighlight('#ADFFD6')" title="Resaltar verde"    style="font-size:11px;width:22px;height:22px;border-radius:3px;">A</button>
+          <button class="t-btn hl-blue"   onclick="applyHighlight('#B3D9FF')" title="Resaltar azul"     style="font-size:11px;width:22px;height:22px;border-radius:3px;">A</button>
+          <button class="t-btn hl-pink"   onclick="applyHighlight('#FFCDB3')" title="Resaltar naranja"  style="font-size:11px;width:22px;height:22px;border-radius:3px;">A</button>
+          <div class="t-sep"></div>
+          <!-- LISTAS -->
+          <button class="t-btn" onclick="execRich('insertUnorderedList')" title="Lista">≡</button>
+          <button class="t-btn" onclick="execRich('insertOrderedList')"   title="Lista numerada">①</button>
+          <div class="t-sep"></div>
+          <!-- IMAGEN -->
+          <button class="t-btn" onclick="triggerImageInsert()" title="Insertar imagen" style="font-size:16px;">🖼</button>
+          <input type="file" id="img-insert-input" accept="image/*" style="display:none" onchange="insertImageFromFile(this)">
+          <div class="t-sep"></div>
+          <!-- STICKERS SVG -->
+          <div class="sticker-bar" id="sticker-bar" style="padding:0;gap:4px;"></div>
+          <div class="t-sep"></div>
+          <button class="t-btn" onclick="execRich('removeFormat')" title="Limpiar formato" style="font-size:10px;width:auto;padding:0 6px;">✕ fmt</button>
+        </div>
+        <div
+          class="rich-editor"
+          id="rich-editor"
+          contenteditable="true"
+          data-placeholder="Escribe tu nota... Puedes pegar imágenes, resaltar, poner en negrita…"
+        ></div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button type="button" class="btn btn-primary" style="flex:1;" onclick="saveNote()">Guardar nota</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-note')" style="flex:1;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── SUPABASE CONFIG ────────────────────────────────────── */
+const SUPA_URL = 'https://rjboxewxkfnlqgzorfxj.supabase.co';
+const SUPA_KEY = 'sb_publishable_EfdMuLp1vVz7DG1ho51qcw_pAqo8nZ0';
+
+// Cliente Supabase via CDN
+let _supa = null;
+function getSupa() {
+  if (!_supa && window.supabase) {
+    _supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  }
+  return _supa;
+}
+
+/* ─── ESTADO LOCAL (cache) ───────────────────────────────── */
+// La UI es síncrona — cargamos Supabase al inicio y mantenemos
+// el estado en memoria. Cada mutación va a Supabase + actualiza el cache.
+const state = { tasks:[], projects:[], drivers:[], notes:[], clients:[], loaded:false };
+
+/* ─── HELPERS ───────────────────────────────────────────── */
+const uid   = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+const el    = id => document.getElementById(id);
+const today = () => new Date().toISOString().split('T')[0];
+
+/* ─── CARGA INICIAL ──────────────────────────────────────── */
+async function loadAll() {
+  showLoader(true);
+  const supa = getSupa();
+  if (!supa) { showLoader(false); bootFallback(); return; }
+  try {
+    const [t, p, d, n, c] = await Promise.all([
+      supa.from('tasks').select('*').order('created_at', { ascending: false }),
+      supa.from('projects').select('*').order('created_at', { ascending: false }),
+      supa.from('drivers').select('*').order('created_at', { ascending: false }),
+      supa.from('notes').select('*').order('created_at', { ascending: false }),
+      supa.from('clients').select('*').order('created_at', { ascending: true }),
+    ]);
+    state.tasks    = t.data || [];
+    state.projects = p.data || [];
+    state.drivers  = d.data || [];
+    state.notes    = n.data || [];
+    state.clients  = c.data || [];
+    state.loaded   = true;
+    // Si no hay datos, sembrar datos iniciales
+    if (!state.clients.length)  await seedClients();
+    if (!state.projects.length) await seedProjects();
+    if (!state.drivers.length)  await seedDriversHistory();
+    if (!state.tasks.length)    await seedRecurringTasks();
+  } catch(e) {
+    console.error('Supabase error:', e);
+    showLoader(false);
+    return;
+  }
+  showLoader(false);
+  renderAll();
+}
+
+function showLoader(show) {
+  let loader = el('app-loader');
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.id = 'app-loader';
+    loader.style.cssText = 'position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;font-family:var(--font);font-size:13px;color:var(--text3);font-weight:600;letter-spacing:0.3px;';
+    loader.innerHTML = '<div style="text-align:center;"><div style="font-size:28px;margin-bottom:12px;">⚡</div>Conectando con Supabase…</div>';
+    document.body.appendChild(loader);
+  }
+  loader.style.display = show ? 'flex' : 'none';
+}
+
+/* ─── OPERACIONES SUPABASE ───────────────────────────────── */
+async function sbInsert(table, obj) {
+  const supa = getSupa();
+  if (!supa) return;
+  const { error } = await supa.from(table).insert(obj);
+  if (error) console.error(`Insert ${table}:`, error);
+}
+
+async function sbUpdate(table, id, obj) {
+  const supa = getSupa();
+  if (!supa) return;
+  const { error } = await supa.from(table).update(obj).eq('id', id);
+  if (error) console.error(`Update ${table}:`, error);
+}
+
+async function sbDelete(table, id) {
+  const supa = getSupa();
+  if (!supa) return;
+  const { error } = await supa.from(table).delete().eq('id', id);
+  if (error) console.error(`Delete ${table}:`, error);
+}
+
+/* ─── SEED CLIENTES ──────────────────────────────────────── */
+async function seedClients() {
+  const defaults = [
+    { id:uid(), name:'Línea Directa',       sector:'Retail / Moda',         contact:'',  color:'#6366F1' },
+    { id:uid(), name:'Colmena Seguros',      sector:'Seguros',               contact:'Vane', color:'#16A34A' },
+    { id:uid(), name:'Enel',                sector:'Energía',               contact:'',  color:'#EA580C' },
+    { id:uid(), name:'Tigo Business',        sector:'Telecomunicaciones',    contact:'',  color:'#9333EA' },
+    { id:uid(), name:'BBVA Fidelización',    sector:'Banca',                 contact:'',  color:'#0284C7' },
+    { id:uid(), name:'BBVA Ventas',          sector:'Banca',                 contact:'',  color:'#0F766E' },
+    { id:uid(), name:'Colmedica Cobranzas',  sector:'Salud / Cobranzas',     contact:'',  color:'#E11D48' },
+    { id:uid(), name:'Seguros Colsanitas',   sector:'Seguros / Salud',       contact:'',  color:'#0F766E' },
+    { id:uid(), name:'Interno',             sector:'Emtelco',               contact:'',  color:'#CA8A04' },
+  ];
+  const supa = getSupa();
+  const { data } = await supa.from('clients').insert(defaults).select();
+  state.clients = data || defaults;
+}
+
+/* ─── SEED PROYECTOS ─────────────────────────────────────── */
+async function seedProjects() {
+  const defaults = [
+    { id:uid(), client:'Línea Directa', name:'Modelo de Relación LD', description:'Despliegue del modelo de relación en 3 fases. 23 actividades. 4 pilares: Nos conectamos · Te respaldamos · Generamos valor · Nos comprometemos.', impact:'Experiencia del cliente', priority:'Alta', status:'En proceso', date:'2026-04-13', obs:'Planeación activa. Semana 13 abr – jul 2026. Seguimiento semanal cada lunes.' },
+    { id:uid(), client:'Interno', name:'Anticipación de Futuros', description:'Proyecto interno de aprendizaje metodológico. F1: Ruta de Aprendizaje (abr-may). F2: Taller Práctico (may-jun). F3: Entrega (jul).', impact:'Capacitación CX', priority:'Media', status:'En proceso', date:'2026-04-01', obs:'3% avance total. F1 al 7.5% — Lectura autónoma en progreso.' },
+    { id:uid(), client:'Línea Directa', name:'Reconocimientos CX', description:'Activación de mesas de trabajo — 5 categorías de reconocimiento. Narrativa completa diseñada.', impact:'Experiencia del colaborador', priority:'Alta', status:'En proceso', date:'2026-04-01', obs:'Diseño de plataforma de reconocimientos en curso.' },
+    { id:uid(), client:'BBVA Ventas', name:'Inmersión Comercial', description:'Escucha de llamadas, conversatorio con ejecutiva, estrategia de gestión comercial, motivación, gamificación, UX.', impact:'Efectividad y Conversión', priority:'Alta', status:'En proceso', date:'2026-04-01', obs:'Estrategia en socialización. Investigación mensajes RCS y demo WhatsApp en curso.' },
+    { id:uid(), client:'Seguros Colsanitas', name:'Modelo Relación «Latir»', description:'Diseño y socialización del modelo de relación «Latir». Banco de objeciones y guías de conversación para 3 productos.', impact:'Experiencia del cliente', priority:'Alta', status:'En proceso', date:'2026-04-01', obs:'Diseño y socialización completados. Banco de objeciones en curso.' },
+    { id:uid(), client:'Colmedica Cobranzas', name:'Benchmarking «Comunicación que Conecta»', description:'Diseño del benchmarking con ruta de evolución de comunicaciones. Investigación llamadas WhatsApp, habeas data.', impact:'Generación de valor / Efectividad', priority:'Alta', status:'En proceso', date:'2026-04-01', obs:'Investigación completada. Pendiente socialización con cliente.' },
+    { id:uid(), client:'BBVA Fidelización', name:'Rediseño Encuesta NPS', description:'Revisión encuesta Genesys para feedback más eficiente sin afectar indicadores.', impact:'Indicadores de calidad / CX', priority:'Alta', status:'En proceso', date:'2026-03-01', obs:'Socialización realizada. Ajustes incorporados.' },
+    { id:uid(), client:'Colmena Seguros', name:'Modelo Operativo Integral', description:'Diseño del modelo operativo en 3 dimensiones.', impact:'Oportunidad comercial', priority:'Alta', status:'Finalizado', date:'2026-03-05', obs:'Entregado en reunión del 11 de marzo.' },
+    { id:uid(), client:'Enel', name:'Modelo de Relación PULSO', description:'Diseño del modelo de relación de Enel según valores y pilares corporativos.', impact:'Experiencia del cliente', priority:'Alta', status:'Finalizado', date:'2026-03-20', obs:'Aprobado por cliente corporativo el 27 de marzo.' },
+  ];
+  const supa = getSupa();
+  const { data } = await supa.from('projects').insert(defaults).select();
+  state.projects = data || defaults;
+}
+
+/* ─── SEED DRIVERS HISTÓRICO ─────────────────────────────── */
+async function seedDriversHistory() {
+  const defaults = [
+    { id:uid(), client:'BBVA Fidelización',      s1:0,s2:0,s3:0,s4:0,s5:0, pct:37, month:'2026-02', label:'Feb 2026' },
+    { id:uid(), client:'Línea Directa',           s1:0,s2:0,s3:0,s4:0,s5:0, pct:28, month:'2026-02', label:'Feb 2026' },
+    { id:uid(), client:'Colmena Seguros',         s1:0,s2:0,s3:0,s4:0,s5:0, pct:24, month:'2026-02', label:'Feb 2026' },
+    { id:uid(), client:'BBVA Ventas',             s1:0,s2:0,s3:0,s4:0,s5:0, pct:4,  month:'2026-02', label:'Feb 2026' },
+    { id:uid(), client:'Cobranzas Especializado', s1:0,s2:0,s3:0,s4:0,s5:0, pct:4,  month:'2026-02', label:'Feb 2026' },
+    { id:uid(), client:'Colmedica Cobranzas',     s1:0,s2:0,s3:0,s4:0,s5:0, pct:3,  month:'2026-02', label:'Feb 2026' },
+    { id:uid(), client:'Línea Directa',           s1:0,s2:0,s3:0,s4:0,s5:0, pct:38, month:'2026-03', label:'Mar 2026' },
+    { id:uid(), client:'Colmena Seguros',         s1:0,s2:0,s3:0,s4:0,s5:0, pct:22, month:'2026-03', label:'Mar 2026' },
+    { id:uid(), client:'Enel',                    s1:0,s2:0,s3:0,s4:0,s5:0, pct:15, month:'2026-03', label:'Mar 2026' },
+    { id:uid(), client:'BBVA Fidelización',       s1:0,s2:0,s3:0,s4:0,s5:0, pct:14, month:'2026-03', label:'Mar 2026' },
+    { id:uid(), client:'Tigo Business',           s1:0,s2:0,s3:0,s4:0,s5:0, pct:6,  month:'2026-03', label:'Mar 2026' },
+    { id:uid(), client:'BBVA Ventas',             s1:0,s2:0,s3:0,s4:0,s5:0, pct:5,  month:'2026-03', label:'Mar 2026' },
+    { id:uid(), client:'Línea Directa',           s1:0,s2:0,s3:0,s4:0,s5:0, pct:30, month:'2026-04', label:'Abr 2026' },
+    { id:uid(), client:'BBVA Ventas',             s1:0,s2:0,s3:0,s4:0,s5:0, pct:25, month:'2026-04', label:'Abr 2026' },
+    { id:uid(), client:'Seguros Colsanitas',      s1:0,s2:0,s3:0,s4:0,s5:0, pct:25, month:'2026-04', label:'Abr 2026' },
+    { id:uid(), client:'Colmedica Cobranzas',     s1:0,s2:0,s3:0,s4:0,s5:0, pct:17, month:'2026-04', label:'Abr 2026' },
+    { id:uid(), client:'BBVA Fidelización',       s1:0,s2:0,s3:0,s4:0,s5:0, pct:3,  month:'2026-04', label:'Abr 2026' },
+  ];
+  const supa = getSupa();
+  const { data } = await supa.from('drivers').insert(defaults).select();
+  state.drivers = data || defaults;
+}
+
+
+
+/* ─── SEED TAREAS RECURRENTES ─────────────────────────────── */
+async function seedRecurringTasks() {
+  const base = today();
+  const defaults = [
+    { id:uid(), description:'Informe mensual Diseño CX — PPTX todos los clientes', client:'Interno', priority:'Alta', type:'Operación', status:'Pendiente', date:base,
+      recur:{ freq:'monthly', endDate:null, days:[], interval:null },
+      obs:'UN SOLO PPTX con actividades del mes de todos los clientes activos. Reto → Cómo resolvimos → Timeline → Resultados. Storytelling cercano y profesional.' },
+    { id:uid(), description:'Planeación mensual — Registro de horas por semana', client:'Interno', priority:'Alta', type:'Administrativo', status:'Pendiente', date:base,
+      recur:{ freq:'monthly', endDate:null, days:[], interval:null },
+      obs:'Registrar horas S1–S5 por proyecto y cliente. Alimenta los drivers del mes.' },
+    { id:uid(), description:'Drivers — Reporte de % dedicación por cliente', client:'Interno', priority:'Alta', type:'Administrativo', status:'Pendiente', date:base,
+      recur:{ freq:'monthly', endDate:null, days:[], interval:null },
+      obs:'A fin de mes. Enviar a Vanessa Gaviria. CC: Verónica Reyes o Tatiana Patiño. Asunto: "Drivers [Mes] Diseño CX".' },
+    { id:uid(), description:'Actualización semanal del backlog de proyectos', client:'Interno', priority:'Media', type:'Administrativo', status:'Pendiente', date:base,
+      recur:{ freq:'weekly', endDate:null, days:['5'], interval:null },
+      obs:'Cada viernes: actualizar estados del backlog.' },
+    { id:uid(), description:'Seguimiento Modelo de Relación LD — actividades', client:'Línea Directa', priority:'Alta', type:'Operación', status:'Pendiente', date:base,
+      recur:{ freq:'weekly', endDate:'2026-07-31', days:['1'], interval:null },
+      obs:'23 actividades en 3 fases. 4 pilares: Nos conectamos · Te respaldamos · Generamos valor · Nos comprometemos.' },
+    { id:uid(), description:'Seguimiento Anticipación de Futuros — avance por fase', client:'Interno', priority:'Media', type:'Administrativo', status:'Pendiente', date:base,
+      recur:{ freq:'weekly', endDate:'2026-07-31', days:['5'], interval:null },
+      obs:'F1 (40%) abr-may. F2 (30%) may-jun. F3 (30%) jul. 3% avance total.' },
+  ];
+  const supa = getSupa();
+  const { data } = await supa.from('tasks').insert(defaults).select();
+  state.tasks = data || defaults;
+}
+
+/* ─── MUTACIONES ASYNC ───────────────────────────────────── */
+// Wrapper: ejecuta en Supabase y refresca state
+async function mutate(fn) {
+  await fn();
+  renderAll();
+}
+
+/* ─── TAREAS — CRUD ──────────────────────────────────────── */
+async function saveTaskFromForm() {
+  const id  = el('task-id').value;
+  const obj = {
+    id:          id || uid(),
+    description: el('task-desc').value,
+    client:      el('task-client').value,
+    date:        el('task-date').value,
+    priority:    el('task-priority').value,
+    type:        el('task-type').value,
+    obs:         el('task-obs').value,
+    recur:       getRecurData(),
+    status:      id ? (state.tasks.find(t=>t.id===id)||{}).status||'Pendiente' : 'Pendiente',
+  };
+  if (id) {
+    state.tasks = state.tasks.map(t => t.id===id ? {...t,...obj} : t);
+    await sbUpdate('tasks', id, obj);
+  } else {
+    state.tasks.unshift(obj);
+    await sbInsert('tasks', obj);
+  }
+  closeModal('modal-task');
+}
+
+async function doneTask(id) {
+  const t = state.tasks.find(t=>t.id===id);
+  if (!t) return;
+  const updates = { status:'Completada', done_at: new Date().toISOString() };
+  state.tasks = state.tasks.map(x => x.id===id ? {...x,...updates} : x);
+  await sbUpdate('tasks', id, updates);
+
+  if (t.recur) {
+    const nextDate = nextRecurDate(t);
+    if (nextDate) {
+      const next = { id:uid(), description:t.description, client:t.client, date:nextDate,
+        priority:t.priority, type:t.type, obs:t.obs, recur:t.recur,
+        status:'Pendiente', recur_from:t.id };
+      state.tasks.unshift(next);
+      await sbInsert('tasks', next);
+    }
+  }
+  renderAll();
+}
+
+async function cycleTask(id) {
+  const t = state.tasks.find(t=>t.id===id);
+  if (!t) return;
+  const s = ['Pendiente','En proceso','Completada'];
+  const updates = { status: s[(s.indexOf(t.status)+1)%s.length] };
+  state.tasks = state.tasks.map(x => x.id===id ? {...x,...updates} : x);
+  await sbUpdate('tasks', id, updates);
+  renderAll();
+}
+
+async function deleteTask(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  state.tasks = state.tasks.filter(t=>t.id!==id);
+  await sbDelete('tasks', id);
+  renderAll();
+}
+
+/* ─── PROYECTOS — CRUD ───────────────────────────────────── */
+async function saveProjectFromForm() {
+  const id = el('proj-id').value;
+  const obj = {
+    id: id || uid(),
+    client: el('proj-client').value, name: el('proj-name').value,
+    description: el('proj-desc').value, impact: el('proj-impact').value,
+    priority: el('proj-priority').value, status: el('proj-status').value,
+    date: el('proj-date').value, obs: el('proj-obs').value,
+  };
+  if (id) {
+    state.projects = state.projects.map(p => p.id===id ? {...p,...obj} : p);
+    await sbUpdate('projects', id, obj);
+  } else {
+    state.projects.unshift(obj);
+    await sbInsert('projects', obj);
+  }
+  closeModal('modal-project');
+  renderAll();
+}
+
+async function deleteProject(id) {
+  if (!confirm('¿Eliminar este proyecto?')) return;
+  state.projects = state.projects.filter(p=>p.id!==id);
+  await sbDelete('projects', id);
+  renderAll();
+}
+
+/* ─── DRIVERS — CRUD ─────────────────────────────────────── */
+async function saveDriverFromForm() {
+  const client = el('drv-client').value;
+  const currentMonth = new Date().toISOString().slice(0,7);
+  const monthNames = {'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'};
+  const [y,m] = currentMonth.split('-');
+  const obj = {
+    id:uid(), client,
+    s1:+el('drv-s1').value||0, s2:+el('drv-s2').value||0,
+    s3:+el('drv-s3').value||0, s4:+el('drv-s4').value||0,
+    s5:+el('drv-s5').value||0, pct:0,
+    month:currentMonth, label:`${monthNames[m]} ${y}`,
+  };
+  state.drivers.unshift(obj);
+  await sbInsert('drivers', obj);
+  closeModal('modal-driver');
+  renderAll();
+}
+
+async function deleteDriver(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  state.drivers = state.drivers.filter(d=>d.id!==id);
+  await sbDelete('drivers', id);
+  renderAll();
+}
+
+/* ─── CLIENTES — CRUD ────────────────────────────────────── */
+async function saveClient() {
+  const name = el('client-name').value.trim();
+  if (!name) { el('client-name').focus(); return; }
+  const id = el('client-id').value;
+  const obj = { id:id||uid(), name, sector:el('client-sector').value, contact:el('client-contact').value, color:selectedClientColor };
+  if (id) {
+    state.clients = state.clients.map(c => c.id===id ? {...c,...obj} : c);
+    await sbUpdate('clients', id, obj);
+  } else {
+    state.clients.push(obj);
+    await sbInsert('clients', obj);
+  }
+  closeModal('modal-client');
+  renderAll();
+}
+
+async function deleteClient(id) {
+  const c = state.clients.find(c=>c.id===id);
+  if (!c || !confirm(`¿Eliminar a "${c.name}"?`)) return;
+  state.clients = state.clients.filter(c=>c.id!==id);
+  await sbDelete('clients', id);
+  renderAll();
+}
+
+/* ─── NOTAS — CRUD ───────────────────────────────────────── */
+async function saveNote() {
+  const proj = el('note-project').value.trim();
+  const body = el('rich-editor').innerHTML.trim();
+  if (!proj || !body || body==='<br>') return;
+  const id  = el('note-id').value;
+  const obj = {
+    id:id||uid(), project:proj, client:el('note-client').value,
+    body, type:noteType, color:noteType==='postit'?postitColor:'',
+    updated_at:new Date().toISOString(),
+  };
+  if (id) {
+    state.notes = state.notes.map(n => n.id===id ? {...n,...obj} : n);
+    await sbUpdate('notes', id, obj);
+  } else {
+    state.notes.unshift(obj);
+    await sbInsert('notes', obj);
+  }
+  closeModal('modal-note');
+  renderAll();
+}
+
+async function deleteNote(id) {
+  if (!confirm('¿Eliminar esta nota?')) return;
+  state.notes = state.notes.filter(n=>n.id!==id);
+  await sbDelete('notes', id);
+  renderAll();
+}
+
+/* ─── CONECTAR EVENTOS DE FORMULARIOS ────────────────────── */
+el('btn-new-task').addEventListener('click', () => {
+  el('task-id').value = '';
+  el('task-modal-title').textContent = 'Nueva tarea';
+  el('form-task').reset();
+  el('task-recur').value = 'none';
+  toggleRecurFields();
+  refreshClientSelects();
+  openModal('modal-task');
+});
+
+el('form-task').addEventListener('submit', async e => {
+  e.preventDefault();
+  await saveTaskFromForm();
+  renderAll();
+});
+
+el('btn-new-driver').addEventListener('click', () => {
+  el('form-driver').reset();
+  refreshClientSelects();
+  openModal('modal-driver');
+});
+
+el('form-driver').addEventListener('submit', async e => {
+  e.preventDefault();
+  await saveDriverFromForm();
+});
+
+el('form-project').addEventListener('submit', async e => {
+  e.preventDefault();
+  await saveProjectFromForm();
+});
+
+el('btn-new-project').addEventListener('click', () => {
+  el('proj-id').value = '';
+  el('proj-modal-title').textContent = 'Nuevo proyecto';
+  el('form-project').reset();
+  refreshClientSelects();
+  openModal('modal-project');
+});
+
+el('btn-new-client').addEventListener('click', () => {
+  el('client-id').value = '';
+  el('client-modal-title').textContent = 'Nuevo cliente';
+  el('client-name').value = '';
+  el('client-sector').value = '';
+  el('client-contact').value = '';
+  selectedClientColor = '#6366F1';
+  document.querySelectorAll('[data-ccolor]').forEach(d => d.classList.toggle('active', d.dataset.ccolor === '#6366F1'));
+  openModal('modal-client');
+});
+
+el('btn-new-note').addEventListener('click', () => {
+  el('note-id').value = '';
+  el('note-project').value = '';
+  el('note-client').value = '';
+  el('rich-editor').innerHTML = '';
+  setNoteType('note');
+  setPostitColor('postit-yellow');
+  buildStickerBar();
+  openModal('modal-note');
+});
+
+/* ─── RENDER ALL ─────────────────────────────────────────── */
+function renderAll() {
+  refreshClientSelects();
+  renderDashboard();
+  renderTasks();
+  renderProjects();
+  renderDrivers();
+  renderNotes();
+  renderClients();
+}
+
+/* ─── ARRANQUE ───────────────────────────────────────────── */
+// Esperar a que Supabase CDN esté disponible
+window.addEventListener('load', () => {
+  if (window.supabase) {
+    loadAll();
+  } else {
+    // Si el CDN falla, renderizar con estado vacío
+    console.warn('Supabase CDN no disponible');
+    renderAll();
+  }
+});
+</script>
+
+<!-- Supabase JS CDN — debe ir antes del cierre del body -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</body>
+</html>
