@@ -1,3 +1,5 @@
 {
-  "version": 2
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/yohana-workspace-v3.html" }
+  ]
 }
